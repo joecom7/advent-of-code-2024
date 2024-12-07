@@ -1,7 +1,7 @@
 import re
 
 # Regular expression with capture groups
-pattern = r"mul\((\d{1,3}),(\d{1,3})\)"
+pattern = r"mul\((\d+),(\d{1,3})\)"
 
 result = 0
 
