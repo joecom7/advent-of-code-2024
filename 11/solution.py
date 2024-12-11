@@ -12,8 +12,8 @@ def evolve(stone):
     return stone_list
         
 def compute_how_many_stones_recursive(stone:int,n_steps:int,depth:int=0,partial_results={}):
-    if (stone,depth) in partial_results:
-        ret = partial_results[(stone,depth)]
+    if (stone,depth,n_steps) in partial_results:
+        ret = partial_results[(stone,depth,n_steps)]
     else:
         if depth == n_steps:
             ret = 1
@@ -21,11 +21,10 @@ def compute_how_many_stones_recursive(stone:int,n_steps:int,depth:int=0,partial_
             ret = 0
             for new_stone in evolve(stone):
                 ret += compute_how_many_stones_recursive(new_stone,n_steps,depth+1,partial_results)
-        partial_results[(stone,depth)] = ret
+        partial_results[(stone,depth,n_steps)] = ret
     return ret
 
 stone_list = []
-sim_steps = 75
 
 with open('./11/input.txt', 'r') as f:
     file_content = f.read()
@@ -33,6 +32,12 @@ with open('./11/input.txt', 'r') as f:
 
 sol = 0
 for stone in stone_list:
-    sol += compute_how_many_stones_recursive(stone,sim_steps)
+    sol += compute_how_many_stones_recursive(stone,25)
     
 print(f"part 1 solution: {sol}")
+
+sol = 0
+for stone in stone_list:
+    sol += compute_how_many_stones_recursive(stone,75)
+    
+print(f"part 2 solution: {sol}")
