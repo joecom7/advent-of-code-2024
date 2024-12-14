@@ -1,10 +1,9 @@
 import math
 import re
-
-pattern = r"Button\ A:\ X\+(\d+),\ Y\+(\d+)(\r\n|\r|\n)Button\ B:\ X\+(\d+),\ Y\+(\d+)(\r\n|\r|\n)Prize:\ X=(\d+),\ Y=(\d+)"
-
 from sympy import symbols, Eq, solve
 from sympy.solvers.diophantine import diophantine
+
+pattern = r"Button\ A:\ X\+(\d+),\ Y\+(\d+)(\r\n|\r|\n)Button\ B:\ X\+(\d+),\ Y\+(\d+)(\r\n|\r|\n)Prize:\ X=(\d+),\ Y=(\d+)"
 
 def search_min_cost(a_value,b_value,prize_pos):
     
