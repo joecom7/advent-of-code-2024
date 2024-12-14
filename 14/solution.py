@@ -7,6 +7,15 @@ n_cols = 103
 n_robots_quads = [0,0,0,0]
 n_steps = 100
 map = {}
+tree_base_length = 8
+
+def check_possible_tree(map) :
+    for i in range(0,n_rows):
+        for j in range(0,n_cols-tree_base_length):
+            if map[(j,i)] != 0:
+                if all([map[(j+n,i)] != 0 for n in range(0,tree_base_length)]):
+                    return True
+    return False
 
 def print_board():
     for j in range(0,n_cols):
@@ -101,3 +110,18 @@ for i in range(1,4):
     #print_board()
     
 print(f"part 1 solution: {result}")
+
+new_steps = n_steps
+
+while True:
+    new_steps += 1
+    for robot in robots:
+        robot.sim_step()
+    if(check_possible_tree(map)):
+        print(f"after {new_steps} steps")
+        print_board()
+        print()
+        print()
+        print("-----------------------")
+        print()
+        print()
