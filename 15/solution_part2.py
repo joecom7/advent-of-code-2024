@@ -88,7 +88,7 @@ def calculate_score():
     score = 0
     for j in range(0,n_rows):
         for i in range(0,n_cols):
-            if board[(j,i)] == 'O':
+            if board[(j,i)] == '[':
                 score += 100*j + i
     return score           
                 
@@ -149,16 +149,16 @@ move_map = {
     '>' : ( 0, 1)
 }
 
-print("initial state:")
-print_board()
+# print("initial state:")
+# print_board()
 
 for move in moves:
     robot_pos = evolve_map(move,robot_pos)
-    print()
-    print("-------------")
-    print()
-    print(f"move {move}:")
-    print_board()
+    # print()
+    # print("-------------")
+    # print()
+    # print(f"move {move}:")
+    # print_board()
     
 # print_board()
 
@@ -167,4 +167,4 @@ for move in moves:
 #     print(f"move {i}:")
 #     print_board()
 
-print(f"part 1 solution: {calculate_score()}")
+print(f"part 2 solution: {calculate_score()}")
