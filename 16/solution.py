@@ -44,6 +44,16 @@ def get_cw(pos,dir):
 def get_ccw(pos,dir):
     return pos,CCW_MAP[dir]
 
+def get_reachable(pos,dir,cost):
+    return [(get_step(pos,dir),cost + 1),
+            (get_cw(pos,dir),cost + 1000),
+            (get_ccw(pos,dir),cost + 1000)]
+    
+def get_reaching(pos,dir,cost):
+    return [((add_tuple(pos,(-dir[0],-dir[1])),dir),cost - 1),
+            (get_cw(pos,dir),cost - 1000),
+            (get_ccw(pos,dir),cost - 1000)]
+
 def find_shortest_path(start,end,starting_dir=STARTING_DIR,costs={}):
     
     unvisited = set()
@@ -67,30 +77,40 @@ def find_shortest_path(start,end,starting_dir=STARTING_DIR,costs={}):
             break
         
         node_pos,node_dir = smallest_distance_node
-        
-        if get_step(node_pos,node_dir) in unvisited:
-            if costs[get_step(node_pos,node_dir)] > smallest_distance + 1:
-                costs[get_step(node_pos,node_dir)] = smallest_distance + 1
+                
+        for new_pos,new_cost in get_reachable(node_pos,node_dir,smallest_distance):
+            if new_pos in unvisited:
+                if costs[new_pos] > new_cost:
+                    costs[new_pos] = new_cost
             
-        if get_cw(node_pos,node_dir) in unvisited:
-            if costs[get_cw(node_pos,node_dir)] > smallest_distance + 1000:
-                costs[get_cw(node_pos,node_dir)] = smallest_distance + 1000
-            
-        if get_ccw(node_pos,node_dir) in unvisited:
-            if costs[get_ccw(node_pos,node_dir)] > smallest_distance + 1000:
-                costs[get_ccw(node_pos,node_dir)] = smallest_distance + 1000
-            
-    num_best_paths = find_nodes_of_best_paths(start,end,starting_dir,costs)
+    num_nodes_in_best_paths = find_nodes_of_best_paths(start,end,starting_dir,costs)
                     
-    return min(costs[(end,dir)] for dir in DIRS)
+    return min(costs[(end,dir)] for dir in DIRS),num_nodes_in_best_paths
 
 def find_nodes_of_best_paths(start,end,starting_dir,costs):
     min_cost = min(costs[(end,dir)] for dir in DIRS)
     best_ends = []
+    visited = set()
     for pos in costs:
-        if costs[pos] == min_cost:
+        if costs[pos] == min_cost and pos[0] == end:
             best_ends.append(pos)
-    print(best_ends)
+            visited.add(pos[0])
+    #visited = set(best_ends)
+    #print(visited)
+    for config in best_ends:
+        find_nodes_of_best_paths_recursive(config,costs,visited)
+    return len(visited)
+
+def find_nodes_of_best_paths_recursive(config,costs,visited):
+    pos = config[0]
+    dir = config[1]
+    cost = costs[(pos,dir)]
+    for reaching_config,reaching_cost in get_reaching(pos,dir,cost):
+        reaching_pos, reaching_dir = reaching_config
+        if reaching_config in costs and costs[reaching_config] == reaching_cost:
+                visited.add(reaching_pos)
+                find_nodes_of_best_paths_recursive(reaching_config,costs,visited)
+        #print(reaching_pos,reaching_dir,reaching_cost)
         
 n_cols = 0
 n_rows = 0
@@ -114,5 +134,6 @@ with open('./16/input.txt', 'r') as file:
         if n_rows == 1:     
             n_cols = len(line)
             
-print(f"part 1 solution: {find_shortest_path(source,end,starting_dir=STARTING_DIR)}")
-# print_board()
+result = find_shortest_path(source,end,starting_dir=STARTING_DIR)
+print(f"part 1 solution: {result[0]}")
+print(f"part 2 solution: {result[1]}")
