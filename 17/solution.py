@@ -43,6 +43,8 @@ class Computer:
             else:
                 raise "invalid opcode"
             
+            print(f"next A = {self.__A}")
+            
             self.__ip += 2
             
     def execute_program_until_different(self,correct_output):
@@ -98,6 +100,12 @@ class Computer:
             self.__output = ""
             
             self.execute_program_until_different(correct_output)
+            
+            if self.__output[:12] == correct_output[:12]:
+                #print(f"{self.__output}")
+                #print(f"  A = {A_current}")
+                print(f"  A = {int(bin(A_current).split('0b')[1])}")
+            
             if self.__output == correct_output:
                 break
             
@@ -168,12 +176,13 @@ with open('./17/input.txt', 'r') as file:
         elif(line.startswith("Program: ")):
             program = [num for num in [int(numstr) for numstr in line[len("Program: "):].split(",")]]
 
+A_i = 202366627359274
 computer = Computer(A_i,B_i,C_i,program)
 
 computer.execute_program()
 print("part 1 solution: ",end="")
 computer.print_output()
 
-print(f"part 2 solution: {computer.find_A_value()}")
+#print(f"part 2 solution: {computer.find_A_value()}")
 
 
