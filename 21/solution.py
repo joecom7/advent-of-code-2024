@@ -32,6 +32,7 @@ DIR_MAP = {
 }
 
 N_MIDDLE_ROBOTS = 2
+N_MIDDLE_ROBOTS_PART_TWO = 25
 
 class OutOfKeypadException(Exception):
     pass
@@ -161,3 +162,14 @@ for code in codes:
     total_complexity += complexity
     
 print(f"part 1 solution: {total_complexity}")
+
+total_complexity = 0
+
+for code in codes:
+    shortes_path_for_code = get_shortest_path_for_code(code,N_MIDDLE_ROBOTS_PART_TWO)
+    #print(f"shortest path for code {code}: {shortes_path_for_code}")
+    complexity = int(code[:-1]) * shortes_path_for_code
+    #print(f"complexity: {complexity}")
+    total_complexity += complexity
+    
+print(f"part 2 solution: {total_complexity}")
