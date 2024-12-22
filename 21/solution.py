@@ -22,7 +22,9 @@ DIRECTIONAL_KEYPAD_MAP = {
     (1, 2): ">",
 }
 
-DIRECTIONAL_KEYPAD_MAP_INVERTED = dict((v, k) for k, v in DIRECTIONAL_KEYPAD_MAP.items())
+DIRECTIONAL_KEYPAD_MAP_INVERTED = dict(
+    (v, k) for k, v in DIRECTIONAL_KEYPAD_MAP.items()
+)
 
 DIR_MAP = {
     "^": (-1, 0),
@@ -31,117 +33,110 @@ DIR_MAP = {
     "v": (1, 0),
 }
 
+DIR_MAP_INVERTED = dict((v, k) for k, v in DIR_MAP.items())
+
 N_MIDDLE_ROBOTS = 2
 N_MIDDLE_ROBOTS_PART_TWO = 25
-
-class OutOfKeypadException(Exception):
-    pass
 
 
 def add_tuple(a, b):
     return (a[0] + b[0], a[1] + b[1])
 
 
-def get_reached_config(move, current_config):
-    middle_robot_configs = current_config[0]
-    last_robot_config = current_config[1]
-    new_middle_robot_configs = []
-    pressed_last = False
-
-    current_move = move
-    for middle_robot_config in middle_robot_configs:
-        if current_move in DIR_MAP:
-            dir_to_move = DIR_MAP[current_move]
-            middle_robot_config = add_tuple(middle_robot_config, dir_to_move)
-            if middle_robot_config not in DIRECTIONAL_KEYPAD_MAP:
-                raise OutOfKeypadException()
-            current_move = "_"
-        elif current_move == "A":
-            current_move = DIRECTIONAL_KEYPAD_MAP[middle_robot_config]
-        new_middle_robot_configs.append(middle_robot_config)
-
-    if current_move in DIR_MAP:
-        dir_to_move = DIR_MAP[current_move]
-        last_robot_config = add_tuple(last_robot_config, dir_to_move)
-        if last_robot_config not in NUMERICAL_KEYPAD_MAP:
-            raise OutOfKeypadException()
-    #elif current_move == "A":
-    #    pressed_last = True
-    return tuple(new_middle_robot_configs), last_robot_config
+def sub_tuple(a, b):
+    return (a[0] - b[0], a[1] - b[1])
 
 
-def get_possible_configs(n_middle_robots, depth=0):
-    if depth == n_middle_robots:
-        empty_tuple = ()
-        return tuple([(empty_tuple, button) for button in NUMERICAL_KEYPAD_MAP.keys()])
-    recursive_output = get_possible_configs(n_middle_robots, depth + 1)
-    possible_configs = []
-    for config in recursive_output:
-        for current_config in DIRECTIONAL_KEYPAD_MAP.keys():
-            new_config = [current_config]
-            new_config.extend(config[0])
-            possible_configs.append(tuple([tuple(new_config), config[1]]))
-    return tuple(possible_configs)
-
-def get_base_config(n_middle_robots,last_robot_pos):
-    middle_robots_poses = []
-    for _ in range(0,n_middle_robots):
-        middle_robots_poses.append(DIRECTIONAL_KEYPAD_MAP_INVERTED['A'])
-    return tuple([tuple(middle_robots_poses),last_robot_pos])
-
-def get_shortest_path_to_press(current_config, to_press):
+def get_shortest_paths_to_press(current_letter, to_press, keymap, keymap_inverted):
 
     queue = []
     costs = {}
 
-    middle_robot_configs = current_config[0]
-    last_robot_config = current_config[1]
-    n_middle_robots = len(middle_robot_configs)
-    to_reach = get_base_config(n_middle_robots,NUMERICAL_KEYPAD_MAP_INVERTED[to_press])
+    initial_pos = keymap_inverted[current_letter]
+    target_pos = keymap_inverted[to_press]
 
-    # for j in range(0, n_rows):
-    #    for i in range(0, n_cols):
-    #        if board[(j, i)] != "#":
-    #            if (j, i) == start:
-    #                costs[(j, i)] = 0
-    #            else:
-    #                costs[(j, i)] = float("inf")
-
-    for config in get_possible_configs(n_middle_robots):
-        if config == current_config:
-            costs[config] = 0
-        else:
-            costs[config] = float("inf")
-
-    queue.append(current_config)
+    costs[initial_pos] = 0
+    queue.append(initial_pos)
 
     while len(queue) != 0:
-        config = queue.pop(0)
-        smallest_distance = costs[config]
+        pos = queue.pop(0)
+        smallest_distance = costs[pos]
 
-        if config == to_reach:
+        if pos == target_pos:
             break
-                    
-        for move in DIRECTIONAL_KEYPAD_MAP_INVERTED.keys():
-            try:
-                reached_config = get_reached_config(move,config)
-                if costs[reached_config] == float('inf'):
-                    costs[reached_config] = smallest_distance + 1
-                    queue.append(reached_config)
-            except OutOfKeypadException:
-                pass
+
+        for dir in DIR_MAP_INVERTED:
+            reached_pos = add_tuple(dir, pos)
+            if reached_pos in keymap and reached_pos not in costs:
+                costs[reached_pos] = smallest_distance + 1
+                queue.append(reached_pos)
 
     # print(costs)
 
-    return costs[to_reach] + 1
+    return backtrack_shortest_path(target_pos, initial_pos, costs)
 
-def get_shortest_path_for_code(code,n_middle_robots):
-    shortest_path = 0
-    current_config = (get_base_config(n_middle_robots,NUMERICAL_KEYPAD_MAP_INVERTED['A']))
-    for letter in code:
-        shortest_path += get_shortest_path_to_press(current_config, letter)
-        current_config = get_base_config(n_middle_robots,NUMERICAL_KEYPAD_MAP_INVERTED[letter])
-    return shortest_path
+
+def backtrack_shortest_path(pos, initial_pos, costs):
+    if pos == initial_pos:
+        return [""]
+    to_return = []
+    for dir in DIR_MAP_INVERTED:
+        reaching_pos = sub_tuple(pos, dir)
+        if reaching_pos in costs and costs[reaching_pos] == costs[pos] - 1:
+            rv = backtrack_shortest_path(reaching_pos, initial_pos, costs)
+            if len(rv) != 0:
+                for path in rv:
+                    to_return.append(path + DIR_MAP_INVERTED[dir])
+    return to_return
+
+
+def get_keypad_shortest_paths(keymap, inverted_keymap):
+    spmap = {}
+    for letter1 in inverted_keymap:
+        spmap[letter1] = {}
+        for letter2 in inverted_keymap:
+            spmap[letter1][letter2] = get_shortest_paths_to_press(
+                letter1, letter2, keymap, inverted_keymap
+            )
+    return spmap
+
+
+NUM_KEYPAD_SP_MAP = get_keypad_shortest_paths(
+    NUMERICAL_KEYPAD_MAP, NUMERICAL_KEYPAD_MAP_INVERTED
+)
+DIR_KEYPAD_SP_MAP = get_keypad_shortest_paths(
+    DIRECTIONAL_KEYPAD_MAP, DIRECTIONAL_KEYPAD_MAP_INVERTED
+)
+
+
+def get_best_move(n_robots, path, depth=0, cache={}, previous_letter="A"):
+    if (n_robots, path, depth, previous_letter) in cache:
+        return cache[(n_robots, path, depth, previous_letter)]
+    if n_robots == depth:
+        path_len = len(path)
+    elif len(path) == 0:
+        path_len = 0
+    else:
+        if depth == 0:
+            relevant_keymap = NUM_KEYPAD_SP_MAP
+        else:
+            relevant_keymap = DIR_KEYPAD_SP_MAP
+        path_len = 0
+        minimum_len = -1
+        letter = path[0]
+        possible_paths = relevant_keymap[previous_letter][letter]
+        for new_path in possible_paths:
+            next_len = get_best_move(n_robots, new_path + "A", depth + 1, cache=cache)
+            if minimum_len == -1 or next_len < minimum_len:
+                minimum_len = next_len
+        path_len += minimum_len
+        previous_letter_new = letter
+        path_len += get_best_move(
+            n_robots, path[1:], depth, cache=cache, previous_letter=previous_letter_new
+        )
+    cache[(n_robots, path, depth, previous_letter)] = path_len
+    return cache[(n_robots, path, depth, previous_letter)]
+
 
 codes = []
 
@@ -150,26 +145,18 @@ with open("./21/input.txt", "r") as file:
         line = line.strip()
         codes.append(line)
 
-#print(codes)
+cache = {}
 
-total_complexity = 0
-
-for code in codes:
-    shortes_path_for_code = get_shortest_path_for_code(code,N_MIDDLE_ROBOTS)
-    #print(f"shortest path for code {code}: {shortes_path_for_code}")
-    complexity = int(code[:-1]) * shortes_path_for_code
-    #print(f"complexity: {complexity}")
-    total_complexity += complexity
-    
-print(f"part 1 solution: {total_complexity}")
-
-total_complexity = 0
+result = 0
 
 for code in codes:
-    shortes_path_for_code = get_shortest_path_for_code(code,N_MIDDLE_ROBOTS_PART_TWO)
-    #print(f"shortest path for code {code}: {shortes_path_for_code}")
-    complexity = int(code[:-1]) * shortes_path_for_code
-    #print(f"complexity: {complexity}")
-    total_complexity += complexity
-    
-print(f"part 2 solution: {total_complexity}")
+    result += get_best_move(3, code, cache=cache) * int(code[:-1])
+
+print(f"part 1 solution: {result}")
+
+result = 0
+
+for code in codes:
+    result += get_best_move(26, code, cache=cache) * int(code[:-1])
+
+print(f"part 2 solution: {result}")
